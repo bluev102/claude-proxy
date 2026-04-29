@@ -1,9 +1,18 @@
+"""OpenCode provider — BeautifulSoup HTML catalog parser."""
 import re
 from typing import Any, Dict, List
 
 from bs4 import BeautifulSoup
 
-from src.utils import normalize_label, normalize_model_id, normalize_name_key
+from core.utils import normalize_label, normalize_name_key
+
+
+def normalize_model_id_from_str(model_id: str) -> str:
+    """Strip 'opencode/' prefix and whitespace from a raw model ID string."""
+    value = (model_id or "").strip()
+    if value.startswith("opencode/"):
+        value = value.split("/", 1)[1].strip()
+    return value
 
 
 def html_table_to_dicts(table) -> List[Dict[str, str]]:
@@ -49,7 +58,7 @@ def parse_docs_catalog_from_html(html: str) -> Dict[str, Any]:
         if {"model", "model id", "endpoint", "ai sdk package"}.issubset(headers):
             for entry in entries:
                 model_name = entry.get("model", "")
-                model_id = normalize_model_id(entry.get("model id", ""))
+                model_id = normalize_model_id_from_str(entry.get("model id", ""))
                 endpoint = entry.get("endpoint", "")
                 sdk_package = entry.get("ai sdk package", "")
 

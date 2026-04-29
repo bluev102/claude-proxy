@@ -1,5 +1,5 @@
 import pytest
-from src.parsing import parse_docs_catalog_from_html, html_table_to_dicts
+from providers.opencode.parsing import parse_docs_catalog_from_html, html_table_to_dicts
 
 
 class TestHtmlTableToDicts:

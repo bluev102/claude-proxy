@@ -1,8 +1,8 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from src.errors import ProxyValidationError
-from src.utils import clamp_number, make_object_schema, normalize_system_to_text
+from core.errors import ProxyValidationError
+from core.utils import clamp_number, make_object_schema, normalize_system_to_text
 
 
 def normalize_anthropic_messages(messages: Any) -> List[Dict[str, Any]]:
@@ -113,7 +113,7 @@ def normalize_anthropic_tools(tools: Any) -> List[Dict[str, Any]]:
 
         name = str(tool.get("name", "")).strip()
         if not name:
-            from src.config import logger
+            from core.config import logger
             logger.warning("[TOOLS] dropping tools[%s] because name is empty", idx)
             continue
 

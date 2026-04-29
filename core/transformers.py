@@ -2,8 +2,8 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional
 
-from src.config import PASS_THROUGH_ANTHROPIC_EXTRAS
-from src.utils import make_object_schema
+from core.config import PASS_THROUGH_ANTHROPIC_EXTRAS
+from core.utils import make_object_schema
 
 
 def build_anthropic_messages_request(normalized: Dict[str, Any], raw_body: Dict[str, Any]) -> Dict[str, Any]:

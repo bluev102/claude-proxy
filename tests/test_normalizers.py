@@ -1,6 +1,6 @@
 import pytest
-from src.normalizers import normalize_anthropic_messages, normalize_anthropic_tools, normalize_anthropic_request
-from src.errors import ProxyValidationError
+from core.normalizers import normalize_anthropic_messages, normalize_anthropic_tools, normalize_anthropic_request
+from core.errors import ProxyValidationError
 
 
 class TestNormalizeAnthropicMessages:

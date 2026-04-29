@@ -1,20 +1,20 @@
+"""Core routing — builds the routing table from a provider's catalog."""
 import asyncio
 from typing import Any, Dict, Tuple
 
-from src.catalog import fetch_docs_catalog, fetch_live_models
-from src.config import (
+from core.config import (
     ALLOW_MODEL_FALLBACK,
-    FREE_FALLBACK_MODEL,
     FREE_ONLY,
     REQUIRE_LIVE_MODEL,
     ROUTING_CACHE_TTL,
-    state,
 )
-from src.errors import ProxyValidationError
-from src.utils import now_ts, normalize_model_id
+from core.state import state
+from core.errors import ProxyValidationError
+from core.interfaces import ProviderABC
+from core.utils import now_ts
 
 
-async def build_routing_table(force: bool = False) -> Dict[str, Dict[str, Any]]:
+async def build_routing_table(provider: ProviderABC, force: bool = False) -> Dict[str, Dict[str, Any]]:
     cached = state.get("routing_cache")
     cached_ts = state.get("routing_cache_ts", 0.0)
 
@@ -22,8 +22,8 @@ async def build_routing_table(force: bool = False) -> Dict[str, Dict[str, Any]]:
         return cached
 
     docs_catalog, live_models = await asyncio.gather(
-        fetch_docs_catalog(force=force),
-        fetch_live_models(force=force),
+        provider.fetch_catalog(force=force),
+        provider.fetch_live_models(force=force),
     )
 
     routes = docs_catalog["routes"]
@@ -46,36 +46,34 @@ async def build_routing_table(force: bool = False) -> Dict[str, Dict[str, Any]]:
     state["routing_cache"] = final_routes
     state["routing_cache_ts"] = now_ts()
 
-    from src.config import logger
+    from core.config import logger
     logger.info(
-        "[ROUTING] built table total=%s free_only=%s require_live=%s fallback=%s allow_fallback=%s",
+        "[ROUTING] built table total=%s free_only=%s require_live=%s provider=%s",
         len(final_routes),
         FREE_ONLY,
         REQUIRE_LIVE_MODEL,
-        FREE_FALLBACK_MODEL,
-        ALLOW_MODEL_FALLBACK,
+        provider.provider_name,
     )
 
     return final_routes
 
 
-def resolve_request_model(body: Dict[str, Any]) -> str:
-    from src.config import DEFAULT_MODEL
-    model = normalize_model_id(str(body.get("model") or DEFAULT_MODEL))
+def resolve_request_model(provider: ProviderABC, body: Dict[str, Any]) -> str:
+    model = provider.normalize_model_id(str(body.get("model") or provider.default_model or ""))
     if not model:
         raise ProxyValidationError(422, "Model is empty after resolution")
     return model
 
 
-async def resolve_model_route(model_id: str) -> Dict[str, Dict[str, Any]]:
-    routes = await build_routing_table()
+async def resolve_model_route(provider: ProviderABC, model_id: str) -> Dict[str, Dict[str, Any]]:
+    routes = await build_routing_table(provider)
     route = routes.get(model_id)
     if route:
         return route
 
     docs_catalog, live_models = await asyncio.gather(
-        fetch_docs_catalog(),
-        fetch_live_models(),
+        provider.fetch_catalog(),
+        provider.fetch_live_models(),
     )
 
     docs_routes = docs_catalog["routes"]
@@ -118,23 +116,26 @@ async def resolve_model_route(model_id: str) -> Dict[str, Dict[str, Any]]:
     )
 
 
-async def resolve_model_route_with_fallback(requested_model_id: str) -> Tuple[str, Dict[str, Any], bool]:
-    routes = await build_routing_table()
+async def resolve_model_route_with_fallback(
+    provider: ProviderABC, requested_model_id: str
+) -> Tuple[str, Dict[str, Any], bool]:
+    routes = await build_routing_table(provider)
 
     if requested_model_id in routes:
         return requested_model_id, routes[requested_model_id], False
 
     if ALLOW_MODEL_FALLBACK and FREE_ONLY:
-        fallback_id = normalize_model_id(FREE_FALLBACK_MODEL)
+        fallback_id = provider.normalize_model_id(provider.default_fallback_model)
         fallback_route = routes.get(fallback_id)
         if fallback_route:
-            from src.config import logger
+            from core.config import logger
             logger.warning(
-                "[MODEL FALLBACK] requested=%s -> fallback=%s",
+                "[MODEL FALLBACK] requested=%s -> fallback=%s provider=%s",
                 requested_model_id,
                 fallback_id,
+                provider.provider_name,
             )
             return fallback_id, fallback_route, True
 
-    route = await resolve_model_route(requested_model_id)
+    route = await resolve_model_route(provider, requested_model_id)
     return requested_model_id, route, False

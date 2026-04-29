@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from src.utils import safe_json_loads, text_from_block_like
+from core.utils import safe_json_loads, text_from_block_like
 
 
 def build_anthropic_message_response(

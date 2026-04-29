@@ -1,5 +1,5 @@
 import pytest
-from src.transformers import (
+from core.transformers import (
     build_anthropic_messages_request,
     build_openai_chat_request,
     build_openai_responses_request,
@@ -8,7 +8,7 @@ from src.transformers import (
     anthropic_messages_to_responses_input,
     extract_tool_result_text,
 )
-from src.utils import make_object_schema
+from core.utils import make_object_schema
 
 
 class TestBuildAnthropicMessagesRequest:

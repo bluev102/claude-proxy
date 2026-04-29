@@ -4,8 +4,8 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import httpx
 
-from src.errors import ProxyValidationError
-from src.utils import safe_json_loads
+from core.errors import ProxyValidationError
+from core.utils import safe_json_loads
 
 
 def sse_encode(event: str, payload: Dict[str, Any]) -> bytes:

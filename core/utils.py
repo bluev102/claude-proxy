@@ -4,8 +4,7 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional
 
-from src.config import PASS_THROUGH_ANTHROPIC_EXTRAS
-from src.errors import ProxyValidationError
+from core.errors import ProxyValidationError
 
 
 def now_ts() -> float:
@@ -13,10 +12,12 @@ def now_ts() -> float:
 
 
 def normalize_model_id(model_id: str) -> str:
-    value = (model_id or "").strip()
-    if value.startswith("opencode/"):
-        value = value.split("/", 1)[1].strip()
-    return value
+    """Strip whitespace from a model ID.
+
+    Provider-specific prefix stripping (e.g. "opencode/") is handled
+    by the active provider's ``normalize_model_id`` method.
+    """
+    return (model_id or "").strip()
 
 
 def normalize_label(text: str) -> str:

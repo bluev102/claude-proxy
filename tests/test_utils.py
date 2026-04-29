@@ -1,5 +1,5 @@
 import pytest
-from src.utils import (
+from core.utils import (
     clamp_number,
     ensure_dict,
     make_object_schema,
@@ -10,12 +10,12 @@ from src.utils import (
     safe_json_loads,
     text_from_block_like,
 )
-from src.errors import ProxyValidationError
+from core.errors import ProxyValidationError
 
 
 class TestNormalizeModelId:
     def test_strips_opencode_prefix(self):
-        assert normalize_model_id("opencode/claude-sonnet") == "claude-sonnet"
+        pytest.skip("opencode-only prefix handling moved to providers/opencode/provider.py")
 
     def test_no_prefix(self):
         assert normalize_model_id("claude-sonnet") == "claude-sonnet"
